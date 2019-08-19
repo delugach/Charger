@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by sed (PEO Missiles And Space) -->
+<!-- created by Allen Tucker -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="CGGraph" type="GraphType">
+		<xs:annotation>
+			<xs:documentation>XML describing the model content from the CG usability tool.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:complexType name="GraphType">
+		<xs:sequence>
+			<xs:element name="UUID" type="xs:string"/>
+			<xs:element name="OwnerUUID" type="xs:string" minOccurs="0"/>
+			<xs:element name="RelationList">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Relation" type="RelationType" minOccurs="0" maxOccurs="unbounded"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="ConceptList">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Concept" type="ConceptType" minOccurs="0" maxOccurs="unbounded"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Label" type="xs:string"/>
+			<xs:element name="Layout" type="LayoutType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ConceptType">
+		<xs:sequence>
+			<xs:element name="UUID" type="xs:string"/>
+			<xs:element name="OwnerUUID" type="xs:string"/>
+			<xs:element name="Layout" type="LayoutType"/>
+			<xs:element name="Type" default="0">
+				<xs:annotation>
+					<xs:documentation>Valid values:
+0 - UNDEFINED
+1 - PROCESS
+2 - ACTIVITY
+3 - DOCUMENT
+4 - TOOL
+5 - STEP
+6 - STAKEHOLDER
+7 - USER
+8 - CUSTOMER</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:int"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="Label" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RelationType">
+		<xs:sequence>
+			<xs:element name="UUID"/>
+			<xs:element name="OwnerUUID" type="xs:string"/>
+			<xs:element name="Layout" type="LayoutType"/>
+			<xs:element name="Type">
+				<xs:annotation>
+					<xs:documentation>Valid values:
+0 - UNDEFINED
+1 - USES
+2 - CONTROL
+3 - INPUT
+4 - OUTPUT
+5 - FOLLOWS
+6 - ATTRIBUTE_OF
+7 - KIND_OF</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:int"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="Label" type="xs:string"/>
+			<xs:element name="FromUUID" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>UUID of starting concept</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="ToUUID" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>UUID of ending concept</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="LayoutType">
+		<xs:sequence>
+			<xs:element name="Rectangle" type="RectangleType" minOccurs="0"/>
+			<xs:element name="Foreground" type="ColorType"/>
+			<xs:element name="Background" type="ColorType"/>
+			<xs:element name="Path" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Path Elements shall be ordered from begin to end.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="X" type="xs:int"/>
+						<xs:element name="Y" type="xs:int"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RectangleType">
+		<xs:sequence>
+			<xs:element name="X" type="xs:int"/>
+			<xs:element name="Y" type="xs:int"/>
+			<xs:element name="Width" type="xs:int"/>
+			<xs:element name="Height" type="xs:int"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ColorType">
+		<xs:sequence>
+			<xs:element name="Red">
+				<xs:annotation>
+					<xs:documentation>Valid range:  0 - 255</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:int"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="Green">
+				<xs:annotation>
+					<xs:documentation>Valid range:  0 - 255</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:int"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="Blue">
+				<xs:annotation>
+					<xs:documentation>Valid range:  0 - 255</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:int"/>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element name="Alpha" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Valid range:  0 - 255</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:int"/>
+				</xs:simpleType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

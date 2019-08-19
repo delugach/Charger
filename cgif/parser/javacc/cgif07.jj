@@ -1,0 +1,518 @@
+/**
+    This is the token and grammar file for defining CGIF's syntax and constructing an appropriate
+    CG graph from it.
+    Uses javacc as its engine.
+
+
+*/
+
+options {
+    STATIC = false;
+    SANITY_CHECK = true;
+    DEBUG_PARSER = true;
+}
+
+PARSER_BEGIN(CGIFParser)
+package cgif.parser.javacc;
+
+import cgif.generate.NameGenerator;
+import cgif.generate.NameGenerator;
+import cgif.parser.CGIFSubtypeException;
+import cgif.parser.CGIFVariableException;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import cgif.parser.CGIFParserHelper;
+import charger.Global;
+import charger.obj.Actor;
+import charger.obj.Graph;
+import charger.obj.Concept;
+import charger.obj.Relation;
+import charger.obj.Referent;
+import charger.obj.TypeLabel;
+import java.io.Reader;
+import java.util.ArrayList;
+
+/** Beginning the CGIF parser. */
+public class CGIFParser {
+// https://stackoverflow.com/questions/24156948/javacc-quote-with-escape-character  for how to handle strings
+
+    private CGIFParserHelper helper = new CGIFParserHelper();
+    private Graph topGraph = new Graph();
+
+    public  Graph parseCGIFString( String contents ) throws ParseException {
+        InputStream is = new ByteArrayInputStream(contents.getBytes());
+        ReInit( is );
+  //      Graph graph = new Graph();
+        topLevelGraph( );
+        return topGraph;  // filled in by the productions. See production for graph()
+    }
+
+    public void reset() {
+        this.ReInit( (Reader) null );
+        topGraph.dispose();
+        topGraph = new Graph();
+        helper.referents.clear();
+    }
+
+    public Graph getGraph() {
+        return topGraph;
+    }
+}
+
+PARSER_END(CGIFParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+
+MORE :
+{
+  "/*" : IN_MULTI_LINE_COMMENT
+}
+
+<IN_MULTI_LINE_COMMENT>
+SPECIAL_TOKEN :
+{
+    <MULTI_LINE_COMMENT: "*/" > : DEFAULT
+}
+
+<IN_MULTI_LINE_COMMENT>
+MORE :
+{
+    < ~[] >
+}
+
+
+
+TOKEN :
+{
+  <LBRACE: "{">
+| <RBRACE: "}">
+| <LPAREN: "(">
+| <RPAREN: ")">
+| <LBRACKET: "[">
+| <RBRACKET: "]">
+| <COLON: ":">
+| <QUESTIONMARK: "?">
+| <STAR: "*">
+| <COMMA: ",">
+| <ATSIGN: "@">
+| <POUNDSIGN: "#">
+| <LESSTHAN: "<">
+| <GREATERTHAN: ">">
+| <BAR: "|">
+| <DOUBLEQUOTE: "\"">
+}
+
+TOKEN :
+{   
+    <TYPE: "Type" | "TYPE">     // a special type label
+|   <SUBTYPE: "subtype">    // a special relation name
+|   <FORALL: "@every">
+|   <DIST: "@dist">
+|   <COLL: "@coll">
+}
+
+/* LITERALS */
+
+TOKEN :
+{
+  < INTEGER_LITERAL:
+        <DECIMAL_LITERAL> (["l","L"])?
+      | <HEX_LITERAL> (["l","L"])?
+      | <OCTAL_LITERAL> (["l","L"])?
+  >
+|
+  < #DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])* >
+|
+  < #HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ >
+|
+  < #OCTAL_LITERAL: "0" (["0"-"7"])* >
+|
+  < FLOATING_POINT_LITERAL:
+        (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["f","F","d","D"])?
+      | "." (["0"-"9"])+ (<EXPONENT>)? (["f","F","d","D"])?
+      | (["0"-"9"])+ <EXPONENT> (["f","F","d","D"])?
+      | (["0"-"9"])+ (<EXPONENT>)? ["f","F","d","D"]
+  >
+|
+  < #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+|
+<QUOTED_STRING: 
+    "\"" 
+    (
+         "\\" ~[]     //any escaped character
+    |                 //or
+        ~["\"","\\"]  //any character except quote or backslash
+    )* 
+    "\"" > 
+
+|
+  < CHARACTER_LITERAL:
+      "'"
+      (   (~["'","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )
+      "'"
+  >
+                     /* |
+                      < STRING_LITERAL:
+                          "\""
+                          (   (~["\"","\\","\n","\r"])
+                            | ("\\"
+                                ( ["n","t","b","r","f","\\","'","\""]
+                                | ["0"-"7"] ( ["0"-"7"] )?
+                                | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+                                )
+                              )
+                          )*
+                          "\""
+                      >
+                    */
+}
+
+/* IDENTIFIERS */
+
+TOKEN :
+{
+  < IDENTIFIER:  <LETTER> (<PART_LETTER>)*    >
+|
+  < #LETTER:
+      [  // all chars for which Character.isIdentifierStart is true
+         "$",
+         "A"-"Z",
+         "_",
+         "a"-"z"
+      ]
+  >
+|
+  < #PART_LETTER:
+      [  // all chars for which Character.isIdentifierPart is true
+         "\u0000"-"\u0008",
+         "\u000e"-"\u001b",
+         "$",
+         "0"-"9",
+         "A"-"Z",
+         "_",
+         "a"-"z"
+      ]
+  > 
+}
+
+
+
+
+/** Root production. */
+void topLevelGraph(  ) :
+{
+    
+}
+{
+   graph( null )<EOF>
+{
+}
+}
+
+/** parses a graph and adds its elements to . */
+Graph graph( Graph enclosingGraph ) :
+{
+    
+    Graph g; 
+    if ( enclosingGraph == null ) 
+        g = topGraph;
+    else {
+        g = new Graph( enclosingGraph );
+    }
+}
+{ 
+  ( cgifTerm( g ) )*
+//| <LBRACKET> graph( enclosingGraph ) <RBRACKET>
+    {
+        return g;
+    }
+}
+
+void cgifTerm( Graph g) :
+{   
+}
+{
+  concept( g )
+| 
+    relation( g )
+| actor( g )
+}
+
+
+void concept( Graph g ) :
+{ 
+    String type = "unitialized";
+    String comment = null;
+    String chargerComment = null;
+    Token tBracket;
+    Token tType = null;
+    Referent referent = null;
+    Concept concept = null;
+    Graph graph = null;
+}
+{
+   LOOKAHEAD(3)         // This is for when the type label is "TYPE" (case ignored) for a type definition
+    <LBRACKET> tType = <TYPE> <COLON> referent = referent() tBracket=<RBRACKET>
+    {
+        if (Global.importSubtypeRelationsAsHierarchy ) {
+            try {
+                helper.makeTypeLabel( g, referent.getReferentString(), helper.extractChargerComment( tType, tBracket ) );
+            } catch ( CGIFSubtypeException ex ) {
+                Global.error( "Error in CGIF subtype relation: " + ex.getMessage() ); 
+            }
+        } else {
+            // treat as a regular concept
+            concept = helper.makeConcept( g, "Type", referent, helper.extractChargerComment( tType, tBracket ) ); 
+        }
+
+    }
+|  LOOKAHEAD(4)
+  <LBRACKET>  tType = typelabel() [<COLON> referent = referent()] tBracket = <RBRACKET >
+    {
+            // TODO: if tType.image is "Type" then save as TypeLabel, not concept
+            // This makes Type a reserved concept type word
+        concept = helper.makeConcept( g, tType.image, referent, helper.extractChargerComment( tType, tBracket ) ); 
+    }
+|   <LBRACKET> [tType = typelabel()  <COLON> ] graph = graph( g ) tBracket = <RBRACKET >
+    {
+        if ( tType != null ) 
+            graph.setTextLabel( tType.image );
+    }
+}
+
+
+Token typelabel() :
+{
+    Token t = null;
+}
+{ 
+    t = <IDENTIFIER> 
+    { 
+        return t; 
+    }
+|
+      t = <QUOTED_STRING> 
+    { 
+        // CR-1003 should strip extraneous backslash?
+        return t; 
+    }
+
+}
+
+Referent referent() :
+{
+    Token t = null;
+    String s = null;
+    Referent ref = null;
+}
+{ 
+    t = <IDENTIFIER> 
+    { 
+        ref = new Referent( t.image );
+        ref.setReferentString( t.image, false );
+        return ref; 
+    }
+      t = <QUOTED_STRING> 
+                { 
+                    ref = new Referent( t.image );
+                    ref.setReferentString( t.image, false );
+                    return ref; 
+                }
+   
+|    ( t = <INTEGER_LITERAL> | t = <FLOATING_POINT_LITERAL> )
+    {
+        ref = new Referent( );
+        ref.setReferentString( t.image, false );
+        ref.setNumber( Double.parseDouble( t.image ) );
+    }
+|   LOOKAHEAD( 2 )
+   s = variable() 
+    {
+        ref = new Referent();
+        ref.setVariable( s );
+        ref.setReferentString( s );
+        return ref;
+    }
+|   LOOKAHEAD( 2 )
+    <STAR>
+    {
+        ref = new Referent();
+        ref.setReferentString( "*", false );
+        String cgifref = (new NameGenerator()).generateName();
+        ref.setCgifVariableReference( cgifref );
+        return ref;
+    }
+|  
+     <POUNDSIGN> ( t = <IDENTIFIER> | t = <INTEGER_LITERAL> )
+    {   ref = new Referent();
+        ref.setReferentString( "#" + t.image , false );
+        ref.setMarker( "#" + t.image ); 
+     }
+|   ref = setReferent()
+    {
+        return ref;
+    }
+
+}
+
+void relation( Graph g ) :
+{
+    Token rname;
+    Token rparen;
+    Relation relation = null;
+    Referent r = null;
+    Token subtype = null;
+    Token supertype = null;
+    ArrayList<String> variables = new ArrayList<String>();
+}
+{ LOOKAHEAD(4)
+   <LPAREN> rname = <SUBTYPE> subtype = <IDENTIFIER> supertype = <IDENTIFIER> rparen = <RPAREN>
+    {
+        if (Global.importSubtypeRelationsAsHierarchy ) {
+            // Create a subtype relation between the two types
+            try {
+                helper.makeGenSpecLink( g,  supertype.image, subtype.image, helper.extractChargerComment( rname, rparen ) );
+            } catch ( CGIFSubtypeException ex ) {
+                Global.error( "Error in CGIF subtype relation: " + ex.getMessage() ); 
+            }
+        } else {
+            // treat as a regular relation
+            variables.add( supertype.image );
+            variables.add( subtype.image );
+             try {
+                relation = helper.makeRelation( g, "subtype", variables, helper.extractChargerComment( rname, rparen ) );
+            } catch ( CGIFVariableException ex ) {
+                Global.warning( "Error while parsing CGIF: " + ex.getMessage() );
+            }
+        }
+    }
+
+|   <LPAREN> rname = <IDENTIFIER> 
+    ( 
+        r = referent()
+        { if ( r.getVariable() != null )
+            variables.add( r.getVariable() ); 
+          else
+            variables.add( r.getReferentString() );
+        }
+    )+
+
+    rparen = <RPAREN>
+    {
+        try {
+            relation = helper.makeRelation( g, rname.image, variables, helper.extractChargerComment( rname, rparen ) );
+        } catch ( CGIFVariableException ex ) {
+            Global.warning( "Error while parsing CGIF: " + ex.getMessage() );
+        }
+    }
+}
+void actor( Graph g ) :
+{
+    Token aname;
+    Token rparen;
+    Actor actor = null;
+    Referent r = null;
+    Token subtype = null;
+    Token supertype = null;
+    ArrayList<String> inputvariables = new ArrayList<String>();
+    ArrayList<String> outputvariables = new ArrayList<String>();
+}
+{ 
+
+  <LESSTHAN> aname = <IDENTIFIER> 
+    ( 
+
+        r = referent()
+        { inputvariables.add( r.getVariable() ); }
+    )+
+
+
+<BAR>
+
+    ( 
+        r = referent()
+        { outputvariables.add( r.getVariable() ); }
+    )+
+
+    rparen = <GREATERTHAN>
+    {
+        try {
+            actor = helper.makeActor( g, aname.image, inputvariables, outputvariables, helper.extractChargerComment( aname, rparen ) );
+        } catch ( CGIFVariableException ex ) {
+            Global.warning( "Error while parsing CGIF: " + ex.getMessage() );
+        }
+    }
+}
+
+String variable() :
+{
+    String prefix = null;
+    Token var = null;
+}
+{
+    prefix = prefix() var = <IDENTIFIER>
+{
+    if ( prefix == null ) prefix = "";
+    return prefix + var.image;
+}
+}
+
+String prefix() :
+{
+    Token pre = null;
+}
+{
+    pre = <QUESTIONMARK> { return pre.image; }
+ |   pre = <STAR> { return pre.image; } 
+
+}
+
+Referent setReferent() :
+{
+    Referent ref = new Referent();  // the composite referent (may be more than one set member)
+    Referent r;     // each individual referent as it is parsed
+    String card = null;
+}
+{ 
+    <LBRACE>  
+     r = referent() 
+    { ref.addSetMember( r ); }
+    ( 
+        <COMMA> r = referent() 
+    { ref.addSetMember( r ); }
+    )*
+  <RBRACE>
+    [ card = cardinality() ]
+    { 
+        if ( card != null ) {
+            ref.setCardinality( card );
+        }
+        return ref; 
+    }
+}
+
+String cardinality() :
+{
+    String s = null;
+    Token d = null;
+}
+{
+    <ATSIGN> 
+    d = <INTEGER_LITERAL>
+    { return d.image; }
+}
+

@@ -1,0 +1,10 @@
+#!/bin/sh
+#JAR="`dirname $0`/lib/javacc60.jar"
+JAR="/Users/hsd/Research/Active Projects/CharGer/Charger4/Parsing CGIF/javacc-5.0/bin/lib/javacc60.jar"
+
+case "`uname`" in
+     CYGWIN*) JAR="`cygpath --windows -- "$JAR"`" ;;
+esac
+
+java -classpath "$JAR" javacc "$@"
+

@@ -1,0 +1,7 @@
+q[Staff: {*stf}@40%] [Educational_Institution: P-H_University] 
+[Community_Objective: {*cmtobj}] [Motivated_Staff: *x1] [Revenue_Diversion: *x2] 
+[Emerging_Researcher's_Time: *x3] [Community: *x4] [Established_Researcher's_Time: *x5] 
+[Cash_Payment: *x6] [Psychical_Stimulation: *x7] [Transaction: *x8] 
+(source ?x5 P-H_University) (part ?x8 ?x6) (event_subject ?x7 ?x1) (event_subject ?x2 ?x5) 
+(part ?x8 ?x7) (event_subject ?x6 ?x3) (realise ?x1 {*cmtobj}) (destination ?x3 ?x5 {*stf}@40%) 
+(destination {*cmtobj} P-H_University) (source {*cmtobj} ?x4) (part ?x8 ?x2) (source ?x3 P-H_University) 
